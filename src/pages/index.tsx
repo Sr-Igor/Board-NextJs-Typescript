@@ -1,4 +1,5 @@
-import { NextPage } from "next"
+import { GetServerSideProps, NextPage } from "next"
+import { getSession } from "next-auth/react"
 import Head from "next/head"
 import styles from "../styles/styles.module.scss"
 
@@ -26,6 +27,16 @@ const Home: NextPage = () => {
       </main>
     </>
   )
+}
+
+export const getStaticProps: GetServerSideProps = async (ctx) => {
+
+  return{
+    props: {
+
+    },
+    revalidate: 60 * 60 // 1 hour
+  }
 }
 
 export default Home

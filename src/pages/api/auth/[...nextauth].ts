@@ -1,6 +1,7 @@
-import NextAuth from "next-auth"
+import NextAuth, { NextAuthOptions, Profile, Session, User } from "next-auth"
+import { JWT } from "next-auth/jwt"
 import GithubProvider from "next-auth/providers/github"
-export const authOptions = {
+export default NextAuth({
   // Configure one or more authentication providers
   providers: [
     GithubProvider({
@@ -9,5 +10,16 @@ export const authOptions = {
     }),
     // ...add more providers here
   ],
-}
-export default NextAuth(authOptions)
+  callbacks: {
+    async session({ session, user }) {
+      return {user, ...session }
+    },
+    async signIn({ user, account, profile, email, credentials }) {
+      try{
+        return true
+      }catch{
+        return false
+      }
+    },
+  }
+})

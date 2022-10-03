@@ -3,8 +3,8 @@ import { FaGithub } from "react-icons/fa"
 import { FiX } from "react-icons/fi"
 import { signIn, signOut, useSession } from "next-auth/react"
 export const Button = () => {
-    const {data} = useSession()
-    console.log(data)
+    const session = useSession()
+    const data = session.data
 
     return  data ?(
         <button
