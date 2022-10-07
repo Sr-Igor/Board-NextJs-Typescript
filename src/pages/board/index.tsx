@@ -1,15 +1,14 @@
 import styles from "./styles.module.scss"
 import Head from "next/head"
-import { FiPlus, FiCalendar, FiEdit2, FiTrash, FiClock } from "react-icons/fi"
+import { FiPlus, FiCalendar, FiEdit2, FiTrash, FiClock, FiX } from "react-icons/fi"
 import { DonateButtton } from "../../components/DonateButton"
 import { GetServerSideProps } from "next"
 import { getSession } from "next-auth/react"
 import { useState, FormEvent } from "react"
 import { firebaseApp } from "../../services/firebase"
-import { getFirestore, getDocs, collection, addDoc, query, where, deleteDoc, doc } from "firebase/firestore"
+import { getFirestore, getDocs, collection, addDoc, query, where, deleteDoc, doc, updateDoc } from "firebase/firestore"
 import { format } from "date-fns"
 import Link from "next/link"
-
 
 type Task = {
     id: string;
@@ -31,6 +30,7 @@ interface Props {
 function Board({user, data}: Props) {
     const [input, setInput] = useState('')
     const [taskList, setTaskList] = useState<Task[]>(JSON.parse(data))
+    const [taskEdit, setTaskEdit] = useState<Task|null>(null)
 
     const handleAddTask = async (e: FormEvent) => {
         e.preventDefault()
@@ -38,8 +38,28 @@ function Board({user, data}: Props) {
         if(!input.trim()){
             return
         }
+
         const firebaseDB = getFirestore(firebaseApp)
         const tasks = collection(firebaseDB, 'tasks')
+
+        if(taskEdit){
+            const task = doc(firebaseDB, 'tasks', taskEdit.id)
+            await updateDoc(task, {
+                task: input
+            }).then(() => {
+                const newTaskList = taskList.map(task => {
+                    if(task.id === taskEdit.id){
+                        task.task = input
+                    }
+                    return task
+                })
+                setTaskList(newTaskList)
+            })
+            setTaskEdit(null)
+            setInput('')
+            return
+        }
+
         await addDoc(tasks, {
             created: new Date(),
             task: input,
@@ -70,12 +90,30 @@ function Board({user, data}: Props) {
         setTaskList(newList)
     }
 
+    const handleEdit = async(task: Task) => {
+        setTaskEdit(task)
+        setInput(task.task)
+    }
+
+    const handleCancelEdit = () => {
+        setTaskEdit(null)
+        setInput('')
+    }
+
     return(
         <>
         <Head>
             <title>Minhas Tarefas - Board</title>
         </Head>
         <main className={styles.container}>
+            {taskEdit && 
+                <span className={styles.warnText}>
+                    <button>
+                        <FiX size={30} color="#FF3636" onClick={()=>handleCancelEdit()}/>
+                    </button>
+                    Você está editando uma tarefa!
+                </span>
+            }
             <form onSubmit={handleAddTask}>
                 <input 
                     type={"text"}
@@ -100,7 +138,7 @@ function Board({user, data}: Props) {
                                     <FiCalendar size={20} color="#FFB800"/>
                                     <time>{task.createdFormated}</time>
                                 </div>
-                                <button>
+                                <button onClick={()=>handleEdit(task)}>
                                     <FiEdit2 size={20} color="#FFF"/>
                                     <span>Editar</span>
                                 </button>
