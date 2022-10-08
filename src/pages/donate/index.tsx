@@ -22,18 +22,17 @@ const Donate = ({data}: Props) => {
 
     const handleSaveDonate =  async () => {
         setApoiador(true)
-        console.log("chamou")
+
         const firebaseDB = getFirestore(firebaseApp)
         const users = collection(firebaseDB, 'users')
         // const user = doc(firebaseDB, 'users', data.email)
 
         await addDoc(users, {
-            id: data.email,
             name: data.name,
             email: data.email,
             image: data.image,
             donate: true,
-            lastDoante: new Date().toString()
+            lastDonate: new Date().toString()
         })
     }
 

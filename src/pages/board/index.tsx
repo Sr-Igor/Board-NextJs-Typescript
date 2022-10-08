@@ -6,7 +6,7 @@ import { GetServerSideProps } from "next"
 import { getSession } from "next-auth/react"
 import { useState, FormEvent } from "react"
 import { firebaseApp } from "../../services/firebase"
-import { getFirestore, getDocs, collection, addDoc, query, where, deleteDoc, doc, updateDoc } from "firebase/firestore"
+import { getFirestore, getDocs, collection, addDoc, query, getDoc,where, deleteDoc, doc, updateDoc } from "firebase/firestore"
 import { format } from "date-fns"
 import Link from "next/link"
 
@@ -25,9 +25,11 @@ interface Props {
         image: string;
     },
     data: string
+    donate: boolean
 }
 
-function Board({user, data}: Props) {
+function Board({user, data, donate}: Props) {
+
     const [input, setInput] = useState('')
     const [taskList, setTaskList] = useState<Task[]>(JSON.parse(data))
     const [taskEdit, setTaskEdit] = useState<Task|null>(null)
@@ -153,13 +155,15 @@ function Board({user, data}: Props) {
             </section>
         </main>
 
-        <div className={styles.vipContainer}>
-            <h3>Obrigado por apoiar esse projeto</h3>
-            <div>
+        {donate &&
+         <div className={styles.vipContainer}>
+            <h3>Obrigado por ser um apoiador desse projeto!</h3>
+            {/* <div>
                 <FiClock size={20} color="#FFF"/>
                 <time>Ultima doação a 5 dias</time>
-            </div>
+            </div> */}
         </div>
+        }
 
         <DonateButtton />
         </>
@@ -181,8 +185,6 @@ export const getServerSideProps: GetServerSideProps = async ({req}) => {
         }
     })
 
-
-
     if(!session?.user) {
         return {
             redirect: {
@@ -192,14 +194,20 @@ export const getServerSideProps: GetServerSideProps = async ({req}) => {
         }
     }
 
+    const users = query(collection(firebaseDB, 'users'), where('email', '==', session?.user?.email))
+    let data2 = await getDocs(users)
+    let items2 = data2.docs.map((doc) => {
+        return {
+            ...doc.data()
+        }
+    })
+
+
     return{props: {
         user: session?.user,
-        data: JSON.stringify(items)
+        data: JSON.stringify(items),
+        donate: items2[0]?.donate?true:false
     }}
 }
 
 export default Board
-
-// function getDocs(tasks: CollectionReference<DocumentData>) {
-//     throw new Error("Function not implemented.")
-// }

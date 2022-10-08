@@ -2,8 +2,24 @@ import { GetServerSideProps, NextPage } from "next"
 import { getSession } from "next-auth/react"
 import Head from "next/head"
 import styles from "../styles/styles.module.scss"
+import { getFirestore, collection, query, where,  doc, getDoc, getDocs } from "firebase/firestore"
+import { firebaseApp } from "../services/firebase"
 
-const Home: NextPage = () => {
+// type Props = {
+//     items: string
+// }
+
+type User ={
+    name: string;
+    email: string;
+    image: string;
+    donate: boolean;
+    lastDonate: string;
+}
+
+const Home: NextPage = ({items}: any) => {
+    items = JSON.parse(items) as User[]
+
   return (
     <>
      <Head>
@@ -21,7 +37,9 @@ const Home: NextPage = () => {
         </section>
 
         <div className={styles.donaters}>
-          <img src="" alt="" />
+          {items.map((item: User) => (
+            <img src={item.image} alt="" />
+          ))}
         </div>
 
       </main>
@@ -31,9 +49,18 @@ const Home: NextPage = () => {
 
 export const getStaticProps: GetServerSideProps = async (ctx) => {
 
+  const firebaseDB = getFirestore(firebaseApp)
+  const users = query(collection(firebaseDB, 'users'))
+  let data = await getDocs(users)
+  let items = data.docs.map((doc) => {
+      return {
+          ...doc.data()
+      }
+  })
+
   return{
     props: {
-
+      items: JSON.stringify(items)
     },
     revalidate: 60 * 60 // 1 hour
   }
